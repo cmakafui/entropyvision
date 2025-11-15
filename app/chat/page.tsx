@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 
 export default function ChatPage() {
   const [input, setInput] = useState('');
-  const { messages, sendMessage, isLoading } = useChat();
+  const { messages, sendMessage, status } = useChat();
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
