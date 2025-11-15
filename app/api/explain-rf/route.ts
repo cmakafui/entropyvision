@@ -111,24 +111,38 @@ export async function POST(req: Request) {
 
     // Define structured output schema
     const rfAnalysisSchema = z.object({
-      summary: z.string().describe("Brief 1-2 sentence overview of RF conditions"),
+      summary: z
+        .string()
+        .describe("Brief 1-2 sentence overview of RF conditions"),
       signalStrength: z.object({
         value: z.string().describe("Signal strength in dBm"),
         quality: z.enum(["excellent", "good", "fair", "poor", "dead"]),
-        factors: z.array(z.string()).describe("Key factors affecting signal strength (distance, path loss, frequency, etc.)"),
+        factors: z
+          .array(z.string())
+          .describe(
+            "Key factors affecting signal strength (distance, path loss, frequency, etc.)"
+          ),
       }),
       coverage: z.object({
-        voice: z.string().describe("Voice call quality assessment (1-2 sentences)"),
-        data: z.string().describe("Data performance assessment (1-2 sentences)"),
+        voice: z
+          .string()
+          .describe("Voice call quality assessment (1-2 sentences)"),
+        data: z
+          .string()
+          .describe("Data performance assessment (1-2 sentences)"),
         overall: z.enum(["outstanding", "good", "adequate", "poor", "none"]),
       }),
       interference: z.object({
         count: z.number(),
-        assessment: z.string().describe("Brief assessment of interference situation"),
+        assessment: z
+          .string()
+          .describe("Brief assessment of interference situation"),
       }),
       handover: z.object({
         stable: z.boolean(),
-        assessment: z.string().describe("Brief assessment of handover stability"),
+        assessment: z
+          .string()
+          .describe("Brief assessment of handover stability"),
       }),
       keyMetrics: z.object({
         bestTx: z.string().describe("Best transmitter ID"),

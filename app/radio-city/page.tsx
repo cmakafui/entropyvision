@@ -1575,6 +1575,126 @@ function Scene({
     };
   }, [getPointOnCity, onCityClick, pathMode, bounds, onAddPathPoint]);
 
+  // Long press handler for mobile (replaces Alt+Click)
+  useEffect(() => {
+    let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+    let touchStartPos: { x: number; y: number } | null = null;
+    let currentTouchPos: { x: number; y: number } | null = null;
+    const LONG_PRESS_DURATION = 500; // ms
+    const MAX_MOVE_DISTANCE = 10; // pixels - cancel if moved too far
+
+    const getPointOnCityFromTouch = (clientX: number, clientY: number) => {
+      if (!modelRef.current) return null;
+      const rect = (gl.domElement as HTMLCanvasElement).getBoundingClientRect();
+      mouse.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse.current, camera as THREE.Camera);
+      const hits = raycaster.intersectObjects(modelRef.current.children, true);
+      if (!hits.length) return null;
+      return hits[0].point.clone();
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      // Ignore if touching UI
+      const target = e.target as HTMLElement;
+      if (target?.closest?.("[data-ui-root]") !== null) return;
+
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      touchStartPos = { x: touch.clientX, y: touch.clientY };
+      currentTouchPos = { x: touch.clientX, y: touch.clientY };
+
+      // Start long press timer
+      longPressTimer = setTimeout(() => {
+        if (!touchStartPos || !currentTouchPos) return;
+
+        // Check if finger hasn't moved too much
+        const dx = currentTouchPos.x - touchStartPos.x;
+        const dy = currentTouchPos.y - touchStartPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= MAX_MOVE_DISTANCE) {
+          // Long press detected - open placement menu
+          const p = getPointOnCityFromTouch(
+            currentTouchPos.x,
+            currentTouchPos.y
+          );
+          if (p) {
+            onCityClick({
+              worldPos: p,
+              screen: { x: currentTouchPos.x, y: currentTouchPos.y },
+            });
+          }
+        }
+
+        // Clean up
+        longPressTimer = null;
+        touchStartPos = null;
+        currentTouchPos = null;
+      }, LONG_PRESS_DURATION);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!touchStartPos || !longPressTimer) return;
+
+      const touch = e.touches[0];
+      if (!touch) return;
+
+      // Update current touch position
+      currentTouchPos = { x: touch.clientX, y: touch.clientY };
+
+      const dx = touch.clientX - touchStartPos.x;
+      const dy = touch.clientY - touchStartPos.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Cancel long press if moved too far
+      if (distance > MAX_MOVE_DISTANCE) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+        touchStartPos = null;
+        currentTouchPos = null;
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      touchStartPos = null;
+      currentTouchPos = null;
+    };
+
+    const onTouchCancel = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      touchStartPos = null;
+      currentTouchPos = null;
+    };
+
+    // Add touch event listeners to the canvas element
+    const canvas = gl.domElement as HTMLCanvasElement;
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: true });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
+    canvas.addEventListener("touchcancel", onTouchCancel, { passive: true });
+
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchCancel);
+    };
+  }, [gl, camera, modelRef, raycaster, mouse, onCityClick]);
+
   const [selectedRay, setSelectedRay] = useState<{
     pos: THREE.Vector3;
     hops: RayHop[];
@@ -1912,8 +2032,10 @@ function InstructionsModal({
 
           <ul className="space-y-1 list-disc pl-4">
             <li>
-              <span className="font-mono text-emerald-300">Alt+Click</span> on
-              the city to open the placement menu and add/remove transmitters.
+              <span className="font-mono text-emerald-300">Alt+Click</span> (or{" "}
+              <span className="font-mono text-emerald-300">long tap</span> on
+              mobile) on the city to open the placement menu and add/remove
+              transmitters.
             </li>
             <li>
               Use the top HUD buttons to toggle{" "}
@@ -2049,22 +2171,36 @@ function RFExplanationModal({
               <div className="space-y-4 text-sm">
                 {/* Summary */}
                 <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
-                  <p className="text-slate-200 leading-relaxed">{analysis.summary}</p>
+                  <p className="text-slate-200 leading-relaxed">
+                    {analysis.summary}
+                  </p>
                 </div>
 
                 {/* Key Metrics */}
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-md bg-slate-900/50 p-2 border border-slate-800">
-                    <div className="text-[10px] text-slate-400 mb-0.5">Best TX</div>
-                    <div className="font-mono text-slate-100">{analysis.keyMetrics.bestTx}</div>
+                    <div className="text-[10px] text-slate-400 mb-0.5">
+                      Best TX
+                    </div>
+                    <div className="font-mono text-slate-100">
+                      {analysis.keyMetrics.bestTx}
+                    </div>
                   </div>
                   <div className="rounded-md bg-slate-900/50 p-2 border border-slate-800">
-                    <div className="text-[10px] text-slate-400 mb-0.5">Distance</div>
-                    <div className="font-mono text-slate-100">{analysis.keyMetrics.distance}m</div>
+                    <div className="text-[10px] text-slate-400 mb-0.5">
+                      Distance
+                    </div>
+                    <div className="font-mono text-slate-100">
+                      {analysis.keyMetrics.distance}m
+                    </div>
                   </div>
                   <div className="rounded-md bg-slate-900/50 p-2 border border-slate-800">
-                    <div className="text-[10px] text-slate-400 mb-0.5">Frequency</div>
-                    <div className="font-mono text-slate-100">{analysis.keyMetrics.frequency} MHz</div>
+                    <div className="text-[10px] text-slate-400 mb-0.5">
+                      Frequency
+                    </div>
+                    <div className="font-mono text-slate-100">
+                      {analysis.keyMetrics.frequency} MHz
+                    </div>
                   </div>
                 </div>
 
@@ -2075,14 +2211,26 @@ function RFExplanationModal({
                   </h4>
                   <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-mono text-slate-100">{analysis.signalStrength.value} dBm</span>
-                      <span className={`text-xs font-semibold ${qualityColors[analysis.signalStrength.quality as keyof typeof qualityColors] || "text-slate-400"}`}>
+                      <span className="font-mono text-slate-100">
+                        {analysis.signalStrength.value} dBm
+                      </span>
+                      <span
+                        className={`text-xs font-semibold ${
+                          qualityColors[
+                            analysis.signalStrength
+                              .quality as keyof typeof qualityColors
+                          ] || "text-slate-400"
+                        }`}
+                      >
                         {analysis.signalStrength.quality.toUpperCase()}
                       </span>
                     </div>
                     <ul className="space-y-1">
                       {analysis.signalStrength.factors.map((factor, i) => (
-                        <li key={i} className="text-xs text-slate-400 flex items-start gap-1.5">
+                        <li
+                          key={i}
+                          className="text-xs text-slate-400 flex items-start gap-1.5"
+                        >
                           <span className="text-blue-400 mt-0.5">•</span>
                           <span>{factor}</span>
                         </li>
@@ -2099,7 +2247,14 @@ function RFExplanationModal({
                   <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800 space-y-2">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs text-slate-400">Overall:</span>
-                      <span className={`text-xs font-semibold ${coverageColors[analysis.coverage.overall as keyof typeof coverageColors] || "text-slate-400"}`}>
+                      <span
+                        className={`text-xs font-semibold ${
+                          coverageColors[
+                            analysis.coverage
+                              .overall as keyof typeof coverageColors
+                          ] || "text-slate-400"
+                        }`}
+                      >
                         {analysis.coverage.overall.toUpperCase()}
                       </span>
                     </div>
@@ -2123,8 +2278,12 @@ function RFExplanationModal({
                       Interference
                     </h4>
                     <div className="text-xs text-slate-300">
-                      <div className="font-mono text-slate-100 mb-1">{analysis.interference.count} signal(s)</div>
-                      <div className="text-slate-400">{analysis.interference.assessment}</div>
+                      <div className="font-mono text-slate-100 mb-1">
+                        {analysis.interference.count} signal(s)
+                      </div>
+                      <div className="text-slate-400">
+                        {analysis.interference.assessment}
+                      </div>
                     </div>
                   </div>
                   <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
@@ -2132,10 +2291,18 @@ function RFExplanationModal({
                       Handover
                     </h4>
                     <div className="text-xs text-slate-300">
-                      <div className={`font-semibold mb-1 ${analysis.handover.stable ? "text-emerald-400" : "text-orange-400"}`}>
+                      <div
+                        className={`font-semibold mb-1 ${
+                          analysis.handover.stable
+                            ? "text-emerald-400"
+                            : "text-orange-400"
+                        }`}
+                      >
                         {analysis.handover.stable ? "STABLE" : "UNSTABLE"}
                       </div>
-                      <div className="text-slate-400">{analysis.handover.assessment}</div>
+                      <div className="text-slate-400">
+                        {analysis.handover.assessment}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2927,7 +3094,10 @@ export default function RadioCityPage() {
       <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
         <div className="pointer-events-auto inline-flex max-w-xl items-center gap-2 rounded-full border border-slate-700 bg-black/70 px-3 py-1.5 text-[11px] text-slate-300">
           <Target className="h-3.5 w-3.5 text-emerald-300" />
-          <span className="font-mono text-emerald-300">Alt+Click</span>
+          <span className="font-mono text-emerald-300 hidden sm:inline">
+            Alt+Click
+          </span>
+          <span className="font-mono text-emerald-300 sm:hidden">long tap</span>
           <span>open placement menu</span>
           {pathMode && (
             <>
