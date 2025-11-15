@@ -2349,15 +2349,6 @@ function ControlPanel({
             </div>
           </div>
         </div>
-
-        {/* Bottom-left mini legend (text content moved to footer below) */}
-        <div className="pointer-events-none mt-auto flex justify-between px-4 pb-3 text-[11px] text-slate-400">
-          <div className="pointer-events-auto hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-700 bg-black/70 px-3 py-1">
-            <Target className="h-3.5 w-3.5 text-emerald-300" />
-            <span className="font-mono text-emerald-300">Right-click</span>
-            <span>to open an explain HUD for any point.</span>
-          </div>
-        </div>
       </div>
 
       {/* Compact details drawer (TX power/freq + sensors) */}
