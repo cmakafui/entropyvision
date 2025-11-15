@@ -28,6 +28,8 @@ import {
   Layers,
   Waypoints,
   Info,
+  Lightbulb,
+  X,
 } from "lucide-react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -1942,6 +1944,215 @@ function InstructionsModal({
 }
 
 // ---------------------------
+// RF Explanation Modal
+// ---------------------------
+function RFExplanationModal({
+  open,
+  onClose,
+  position,
+  analysis,
+  isLoading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  position: THREE.Vector3 | null;
+  analysis: {
+    summary: string;
+    signalStrength: {
+      value: string;
+      quality: string;
+      factors: string[];
+    };
+    coverage: {
+      voice: string;
+      data: string;
+      overall: string;
+    };
+    interference: {
+      count: number;
+      assessment: string;
+    };
+    handover: {
+      stable: boolean;
+      assessment: string;
+    };
+    keyMetrics: {
+      bestTx: string;
+      distance: string;
+      frequency: string;
+    };
+  } | null;
+  isLoading: boolean;
+}) {
+  if (!open) return null;
+
+  const qualityColors = {
+    excellent: "text-emerald-400",
+    good: "text-green-400",
+    fair: "text-yellow-400",
+    poor: "text-orange-400",
+    dead: "text-red-400",
+  } as const;
+
+  const coverageColors = {
+    outstanding: "text-emerald-400",
+    good: "text-green-400",
+    adequate: "text-yellow-400",
+    poor: "text-orange-400",
+    none: "text-red-400",
+  } as const;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2">
+        <div className="rounded-lg border border-slate-700 bg-black/95 p-4 text-slate-100 shadow-2xl backdrop-blur">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-blue-400" />
+              <h3 className="font-semibold">
+                RF Analysis
+                {position && (
+                  <span className="ml-2 font-mono text-[11px] text-slate-400">
+                    ({position.x.toFixed(1)}, {position.y.toFixed(1)},{" "}
+                    {position.z.toFixed(1)})
+                  </span>
+                )}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="max-h-[60vh] overflow-y-auto">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
+                  <p className="text-sm text-slate-400">
+                    Analyzing RF conditions...
+                  </p>
+                </div>
+              </div>
+            ) : analysis ? (
+              <div className="space-y-4 text-sm">
+                {/* Summary */}
+                <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
+                  <p className="text-slate-200 leading-relaxed">{analysis.summary}</p>
+                </div>
+
+                {/* Key Metrics */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-md bg-slate-900/50 p-2 border border-slate-800">
+                    <div className="text-[10px] text-slate-400 mb-0.5">Best TX</div>
+                    <div className="font-mono text-slate-100">{analysis.keyMetrics.bestTx}</div>
+                  </div>
+                  <div className="rounded-md bg-slate-900/50 p-2 border border-slate-800">
+                    <div className="text-[10px] text-slate-400 mb-0.5">Distance</div>
+                    <div className="font-mono text-slate-100">{analysis.keyMetrics.distance}m</div>
+                  </div>
+                  <div className="rounded-md bg-slate-900/50 p-2 border border-slate-800">
+                    <div className="text-[10px] text-slate-400 mb-0.5">Frequency</div>
+                    <div className="font-mono text-slate-100">{analysis.keyMetrics.frequency} MHz</div>
+                  </div>
+                </div>
+
+                {/* Signal Strength */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    Signal Strength
+                  </h4>
+                  <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-mono text-slate-100">{analysis.signalStrength.value} dBm</span>
+                      <span className={`text-xs font-semibold ${qualityColors[analysis.signalStrength.quality as keyof typeof qualityColors] || "text-slate-400"}`}>
+                        {analysis.signalStrength.quality.toUpperCase()}
+                      </span>
+                    </div>
+                    <ul className="space-y-1">
+                      {analysis.signalStrength.factors.map((factor, i) => (
+                        <li key={i} className="text-xs text-slate-400 flex items-start gap-1.5">
+                          <span className="text-blue-400 mt-0.5">•</span>
+                          <span>{factor}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Coverage */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    Coverage Quality
+                  </h4>
+                  <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800 space-y-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs text-slate-400">Overall:</span>
+                      <span className={`text-xs font-semibold ${coverageColors[analysis.coverage.overall as keyof typeof coverageColors] || "text-slate-400"}`}>
+                        {analysis.coverage.overall.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-300 space-y-1">
+                      <div>
+                        <span className="text-slate-400">Voice: </span>
+                        {analysis.coverage.voice}
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Data: </span>
+                        {analysis.coverage.data}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Interference & Handover */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
+                    <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-2">
+                      Interference
+                    </h4>
+                    <div className="text-xs text-slate-300">
+                      <div className="font-mono text-slate-100 mb-1">{analysis.interference.count} signal(s)</div>
+                      <div className="text-slate-400">{analysis.interference.assessment}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-md bg-slate-900/50 p-3 border border-slate-800">
+                    <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wide mb-2">
+                      Handover
+                    </h4>
+                    <div className="text-xs text-slate-300">
+                      <div className={`font-semibold mb-1 ${analysis.handover.stable ? "text-emerald-400" : "text-orange-400"}`}>
+                        {analysis.handover.stable ? "STABLE" : "UNSTABLE"}
+                      </div>
+                      <div className="text-slate-400">{analysis.handover.assessment}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center text-sm text-slate-400">
+                No analysis available
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------
 // Placement Menu
 // ---------------------------
 function PlacementMenu({
@@ -1949,12 +2160,14 @@ function PlacementMenu({
   onClose,
   onAddTx,
   onRemoveNearestTx,
+  onExplainRf,
   hasTx,
 }: {
   menu: PlacementMenuState;
   onClose: () => void;
   onAddTx: () => void;
   onRemoveNearestTx: () => void;
+  onExplainRf: () => void;
   hasTx: boolean;
 }) {
   if (!menu) return null;
@@ -1996,6 +2209,15 @@ function PlacementMenu({
                 <span>Remove nearest transmitter</span>
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={onExplainRf}
+              className="flex w-full items-center gap-2 rounded-md bg-slate-900 px-2 py-1 text-[11px] text-blue-300 hover:bg-blue-950/70"
+            >
+              <Lightbulb className="h-3.5 w-3.5" />
+              <span>💡 Explain RF here</span>
+            </button>
           </div>
 
           <button
@@ -2429,6 +2651,39 @@ export default function RadioCityPage() {
   // Intro/help modal state
   const [showIntro, setShowIntro] = useState(true);
 
+  // RF Explanation state
+  const [rfExplanation, setRfExplanation] = useState<{
+    position: THREE.Vector3;
+    analysis: {
+      summary: string;
+      signalStrength: {
+        value: string;
+        quality: string;
+        factors: string[];
+      };
+      coverage: {
+        voice: string;
+        data: string;
+        overall: string;
+      };
+      interference: {
+        count: number;
+        assessment: string;
+      };
+      handover: {
+        stable: boolean;
+        assessment: string;
+      };
+      keyMetrics: {
+        bestTx: string;
+        distance: string;
+        frequency: string;
+        margin: string;
+      };
+    } | null;
+    isLoading: boolean;
+  } | null>(null);
+
   // Throttle car probe updates (10 Hz)
   const lastProbeTs = useRef(0);
   const PROBE_HZ = 10;
@@ -2505,6 +2760,54 @@ export default function RadioCityPage() {
     setPlacementMenu(null);
   }, [placementMenu]);
 
+  // RF Explanation handler
+  const handleExplainRf = useCallback(async () => {
+    if (!placementMenu) return;
+
+    const pos = placementMenu.worldPos;
+    setPlacementMenu(null);
+
+    setRfExplanation({
+      position: pos.clone(),
+      analysis: null,
+      isLoading: true,
+    });
+
+    try {
+      const response = await fetch("/api/explain-rf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position: { x: pos.x, y: pos.y, z: pos.z },
+          transmitters: txs.map((tx) => ({
+            id: tx.id,
+            position: { x: tx.pos.x, y: tx.pos.y, z: tx.pos.z },
+            powerDbm: tx.powerDbm,
+            freqMHz: tx.freqMHz,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get RF explanation");
+      }
+
+      const data = await response.json();
+      setRfExplanation({
+        position: pos.clone(),
+        analysis: data.analysis,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Error explaining RF:", error);
+      setRfExplanation({
+        position: pos.clone(),
+        analysis: null,
+        isLoading: false,
+      });
+    }
+  }, [placementMenu, txs]);
+
   return (
     <div className="relative w-full h-screen bg-black">
       {/* Intro / instructions modal */}
@@ -2534,7 +2837,17 @@ export default function RadioCityPage() {
         onClose={() => setPlacementMenu(null)}
         onAddTx={handleAddTxHere}
         onRemoveNearestTx={handleRemoveNearestTx}
+        onExplainRf={handleExplainRf}
         hasTx={txs.length > 0}
+      />
+
+      {/* RF Explanation Modal */}
+      <RFExplanationModal
+        open={rfExplanation !== null}
+        onClose={() => setRfExplanation(null)}
+        position={rfExplanation?.position || null}
+        analysis={rfExplanation?.analysis || null}
+        isLoading={rfExplanation?.isLoading || false}
       />
 
       <Canvas

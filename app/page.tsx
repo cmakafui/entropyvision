@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Radio, Waves, Eye, Shield, Zap, Sparkles } from "lucide-react";
+import { Radio, Waves, Eye, Zap, Sparkles, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -304,14 +304,6 @@ export default function Home() {
                   </Button>
                 </motion.div>
               </Link>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button size="lg" variant="outline" className="text-lg px-8">
-                  Learn More
-                </Button>
-              </motion.div>
             </motion.div>
           </motion.div>
 
@@ -340,9 +332,16 @@ export default function Home() {
               {
                 icon: Sparkles,
                 title: "Interactive",
-                desc: "Click anywhere to place transmitters, right-click to see signal strength, and explore how waves interact across the city.",
+                desc: "Alt+Click anywhere to place transmitters or analyze RF conditions. Explore how waves interact across the city in real-time.",
                 color: "chart-3",
                 delay: 0.9,
+              },
+              {
+                icon: Brain,
+                title: "AI RF Inspector",
+                desc: "Alt+Click anywhere for instant AI-powered RF analysis. Understand signal strength, interference, and coverage at any point.",
+                color: "chart-1",
+                delay: 1.0,
               },
             ].map((feature, idx) => (
               <motion.div
