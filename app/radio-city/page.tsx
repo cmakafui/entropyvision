@@ -1478,8 +1478,6 @@ function Scene({
   showRays,
   showInterf,
   modelRef,
-  setProbe,
-  probe,
   onCityClick,
   pathMode,
   onAddPathPoint,
@@ -1493,10 +1491,6 @@ function Scene({
   showRays: boolean;
   showInterf: boolean;
   modelRef: React.RefObject<THREE.Group | null>;
-  setProbe: React.Dispatch<
-    React.SetStateAction<{ pos: THREE.Vector3; payload: ProbePayload } | null>
-  >;
-  probe: { pos: THREE.Vector3; payload: ProbePayload } | null;
   onCityClick: (payload: {
     worldPos: THREE.Vector3;
     screen: { x: number; y: number };
@@ -1573,32 +1567,11 @@ function Scene({
         screen: { x: e.clientX, y: e.clientY },
       });
     };
-    const onContext = (e: MouseEvent) => {
-      if (isUIClick(e)) return;
-      e.preventDefault();
-      const p = getPointOnCity(e);
-      if (!p) return;
-
-      const payload = probeAtWithRc(raycaster, p, txs, meshes);
-      setProbe({ pos: p, payload });
-    };
     window.addEventListener("click", onClick);
-    window.addEventListener("contextmenu", onContext);
     return () => {
       window.removeEventListener("click", onClick);
-      window.removeEventListener("contextmenu", onContext);
     };
-  }, [
-    getPointOnCity,
-    setProbe,
-    onCityClick,
-    txs,
-    meshes,
-    pathMode,
-    bounds,
-    onAddPathPoint,
-    raycaster,
-  ]);
+  }, [getPointOnCity, onCityClick, pathMode, bounds, onAddPathPoint]);
 
   const [selectedRay, setSelectedRay] = useState<{
     pos: THREE.Vector3;
@@ -1768,9 +1741,6 @@ function Scene({
       <CityAtmosphere />
       <KeyboardNavigation controlsRef={controlsRef} bounds={bounds} />
 
-      {/* Probe HUD - must be inside Canvas */}
-      <ProbeHUD probe={probe} title="RF Analysis (cursor)" />
-
       {/* Car probe HUD that follows the moving car */}
       <ProbeHUD probe={carProbe} title="Car RF (live)" />
     </>
@@ -1888,11 +1858,6 @@ function ProbeHUD({
             </div>
           ))}
         </div>
-
-        <div className="mt-1 text-[9px] text-white/60">
-          Right-click anywhere to probe. Red = dead zones, Yellow =
-          interference, Orange = unstable handover.
-        </div>
       </div>
     </Html>
   );
@@ -1947,10 +1912,6 @@ function InstructionsModal({
             <li>
               <span className="font-mono text-emerald-300">Alt+Click</span> on
               the city to open the placement menu and add/remove transmitters.
-            </li>
-            <li>
-              <span className="font-mono text-emerald-300">Right-click</span>{" "}
-              anywhere to probe RF quality at that point.
             </li>
             <li>
               Use the top HUD buttons to toggle{" "}
@@ -2377,7 +2338,7 @@ function ControlPanel({
             {txs.length === 0 ? (
               <div className="mb-2 text-[11px] text-slate-400">
                 Use a preset or Alt+Click in the city to open the placement
-                menu. Right-click anywhere to probe RF coverage & quality.
+                menu.
               </div>
             ) : (
               <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
@@ -2452,10 +2413,6 @@ export default function RadioCityPage() {
   const [txs, setTxs] = useState<Tx[]>([]);
   const [showRays, setShowRays] = useState(true);
   const [showInterf, setShowInterf] = useState(true);
-  const [probe, setProbe] = useState<{
-    pos: THREE.Vector3;
-    payload: ProbePayload;
-  } | null>(null);
   const [carProbe, setCarProbe] = useState<{
     pos: THREE.Vector3;
     payload: ProbePayload;
@@ -2515,11 +2472,9 @@ export default function RadioCityPage() {
       worldPos: THREE.Vector3;
       screen: { x: number; y: number };
     }) => {
-      // Clear any existing probe when opening menu
-      setProbe(null);
       setPlacementMenu(payload);
     },
-    [setProbe]
+    []
   );
 
   const handleAddTxHere = useCallback(() => {
@@ -2616,8 +2571,6 @@ export default function RadioCityPage() {
             showRays={showRays}
             showInterf={showInterf}
             modelRef={modelRef}
-            setProbe={setProbe}
-            probe={probe}
             onCityClick={handleCityClick}
             pathMode={pathMode}
             onAddPathPoint={addPathPoint}
@@ -2663,9 +2616,6 @@ export default function RadioCityPage() {
           <Target className="h-3.5 w-3.5 text-emerald-300" />
           <span className="font-mono text-emerald-300">Alt+Click</span>
           <span>open placement menu</span>
-          <span className="text-slate-600">·</span>
-          <span className="font-mono text-emerald-300">Right-click</span>
-          <span>probe RF quality</span>
           {pathMode && (
             <>
               <span className="text-slate-600">·</span>
