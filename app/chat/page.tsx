@@ -1,30 +1,30 @@
-'use client';
+"use client";
 
-import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
+import { motion } from "motion/react";
+import { Send, Bot, User, Loader2, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export default function ChatPage() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const { messages, sendMessage, status } = useChat();
-  const isLoading = status === 'submitted' || status === 'streaming';
+  const isLoading = status === "submitted" || status === "streaming";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    
+
     sendMessage({ text: input });
-    setInput('');
+    setInput("");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-linear-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-8 h-screen flex flex-col max-w-4xl">
         {/* Header */}
         <motion.div
@@ -55,7 +55,9 @@ export default function ChatPage() {
                 className="text-center text-muted-foreground py-12"
               >
                 <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Start a conversation with the AI assistant</p>
+                <p className="text-lg">
+                  Start a conversation with the AI assistant
+                </p>
                 <p className="text-sm mt-2">
                   Ask questions, get help, or just chat!
                 </p>
@@ -67,27 +69,27 @@ export default function ChatPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`flex gap-3 ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  {message.role === 'assistant' && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  {message.role === "assistant" && (
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <Bot className="w-4 h-4 text-primary" />
                     </div>
                   )}
-                  
+
                   <Card
                     className={`max-w-[80%] ${
-                      message.role === 'user'
-                        ? 'bg-primary/10 border-primary/20'
-                        : 'bg-card'
+                      message.role === "user"
+                        ? "bg-primary/10 border-primary/20"
+                        : "bg-card"
                     }`}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-2">
                         {message.parts.map((part, i) => {
                           switch (part.type) {
-                            case 'text':
+                            case "text":
                               return (
                                 <div
                                   key={`${message.id}-${i}`}
@@ -109,25 +111,36 @@ export default function ChatPage() {
                           }
                         })}
                       </div>
+                      {message.role === "assistant" && (
+                        <div className="mt-3 pt-3 border-t border-border/50">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <AlertTriangle className="w-3 h-3" />
+                            <span>
+                              AI-generated content. Please verify information
+                              for accuracy.
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
-                  {message.role === 'user' && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  {message.role === "user" && (
+                    <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <User className="w-4 h-4 text-primary" />
                     </div>
                   )}
                 </motion.div>
               ))
             )}
-            
+
             {isLoading && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex gap-3 justify-start"
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-primary" />
                 </div>
                 <Card className="bg-card">
@@ -159,7 +172,7 @@ export default function ChatPage() {
             disabled={isLoading}
             className="flex-1"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit(e);
               }
@@ -182,4 +195,3 @@ export default function ChatPage() {
     </div>
   );
 }
-
