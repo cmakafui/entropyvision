@@ -2,7 +2,7 @@
 
 Interactive RF propagation sandbox built for the **Junction 2025 – Sensofusion "Radio City" challenge**. The experience renders Hong Kong’s skyline in 3D, lets you drop moving transmitters, and shows interference and drive-test quality in real time.
 
-![City of Echoes landing view](images/homepage.png)
+![Dense towers with ray bundles](images/urban.png)
 
 Live demo: **http://entropyvision.vercel.app/**
 
@@ -39,8 +39,6 @@ Full technical write-up: [`docs/SOLUTION.md`](docs/SOLUTION.md)
 - **Propagation:** Custom ray builder with multi-bounce reflections, semantic material tagging, and instanced meshes for ray particles.
 - **Visualization:** GLSL shader for interference, pulsing wavefront meshes, bloom/vignette/film-grain post-processing, and HUD overlays built with shadcn/ui.
 - **AI Endpoint:** `app/api/explain-rf/route.ts` computes FSPL metrics client-side and calls Gemini 2.5 Pro through `generateObject` to produce structured RF insights.
-
-![Dense urban geometry with ray bundles](images/urban.png)
 
 More implementation details live in `docs/SOLUTION.md`.
 
