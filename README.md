@@ -18,6 +18,8 @@ Full technical write-up: [`docs/SOLUTION.md`](docs/SOLUTION.md)
 - **AI RF Inspector** – Alt+Click anywhere to capture local RF metrics and ask Google Gemini (via `@ai-sdk/google`) for a structured summary of coverage, interference, and handover stability.
 - **Responsive controls** – WASD flight camera on desktop, long-press gestures for mobile, and HUD toggles for rays, interference, and the path tool.
 
+![Waypoint path with sampled RF heatmap](images/car_path.png)
+
 ![GPU interference shader showing wave fringes](images/interference.png)
 
 ![AI assistant explaining RF conditions](images/ai_inspector.png)
